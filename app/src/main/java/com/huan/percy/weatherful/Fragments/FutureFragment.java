@@ -14,9 +14,14 @@ import com.huan.percy.weatherful.R;
  */
 public class FutureFragment extends Fragment{
 
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.future_fragment, container, false);
     }
+
+
+
+
 }

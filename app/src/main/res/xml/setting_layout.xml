@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
+    <PreferenceCategory
+        android:title="@string/setting"
+        android:key="pref_key_storage_settings">
+        <SwitchPreference
+            android:key="pref_key_auto_refresh"
+            android:summary="@string/auto_refresh_info"
+            android:title="@string/auto_refresh"
+            android:defaultValue="true" />
+        <EditTextPreference
+            android:key="pre_key_auto_refresh_frequency"
+            android:summary="@string/refresh_frequency_tip"
+            android:title="@string/refresh_frequency"
+            android:defaultValue="2" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/more"
+        android:key="pre_key_storage_more">
+        <Preference
+            android:title="@string/github"
+            android:summary="https://github.com/HunSem/Weatherful">
+            <intent android:action="android.intent.action.VIEW"
+                android:data="https://github.com/HunSem/Weatherful" />
+        </Preference>
+
+        <Preference
+            android:title="@string/version"
+            android:summary="@string/version_name">
+        </Preference>
+    </PreferenceCategory>
+
+</PreferenceScreen>
