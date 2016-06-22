@@ -1,12 +1,13 @@
 package com.huan.percy.weatherful.Activities;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.design.widget.TabLayout;
-import android.support.v4.view.ViewPager;
-import android.support.v4.widget.NestedScrollView;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -16,13 +17,23 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
+import android.widget.ImageView;
+import android.widget.TextView;
 
-import com.huan.percy.weatherful.Adapter.PagerAdapter;
+import com.huan.percy.weatherful.Model.WeatherInfo;
 import com.huan.percy.weatherful.R;
+import com.thinkpage.lib.api.TPCity;
+import com.thinkpage.lib.api.TPListeners;
+import com.thinkpage.lib.api.TPWeatherManager;
+import com.thinkpage.lib.api.TPWeatherNow;
+
+import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    private String KEY = "2txwvjv6b0knz6gi";
+    private String ID = "U8F257FF5F";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,7 +46,8 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                new UIThread().start();
+                Snackbar.make(view, "更新了哟~", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
         });
@@ -49,33 +61,47 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
-        tabLayout.addTab(tabLayout.newTab().setText("今天天气"));
-        tabLayout.addTab(tabLayout.newTab().setText("生活指数"));
-        tabLayout.addTab(tabLayout.newTab().setText("未来几天"));
-        tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
 
-        final ViewPager viewPager = (ViewPager) findViewById(R.id.pager);
-        final PagerAdapter adapter = new PagerAdapter
-                (getSupportFragmentManager(), tabLayout.getTabCount());
-        viewPager.setAdapter(adapter);
-        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
-        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                viewPager.setCurrentItem(tab.getPosition());
+
+    }
+
+
+    Handler handler = new Handler()
+    {
+        public void handleMessage(android.os.Message msg) {
+            if(msg.what==0x123)
+            {
+                ImageView now_photo = (ImageView) findViewById(R.id.now_photo);
+                TextView now_desc = (TextView) findViewById(R.id.now_desc);
+                TextView now_location = (TextView) findViewById(R.id.now_location);
+                TextView now_temp = (TextView) findViewById(R.id.now_temp);
+                TextView now_tip = (TextView) findViewById(R.id.now_tip);
+
+                SharedPreferences pref = getSharedPreferences("weatherData", MODE_PRIVATE);
+                now_photo.setImageResource(pref.getInt("imageID", R.drawable.sunny));
+                now_desc.setText(pref.getString("desc", "N/A"));
+                now_location.setText(pref.getString("location", "未知"));
+                now_temp.setText(pref.getString("temp", "N/A"));
+                now_tip.setText("!!!");
+
+
             }
+        }
+    };
 
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
+    class UIThread extends Thread
+    {
+        @Override
+        public void run() {
 
+            try {
+                queryWeatherInfo();
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
             }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-
-            }
-        });
+            handler.sendEmptyMessage(0x123);
+        }
     }
 
     @Override
@@ -136,4 +162,60 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+
+    public void queryWeatherInfo(){
+        final TPWeatherManager weatherManager = TPWeatherManager.sharedWeatherManager();
+        //使用心知天气官网获取的key和用户id初始化WeatherManager
+        weatherManager.initWithKeyAndUserId(KEY,ID);
+        // 获取北京当前天气，使用简体中文、摄氏度
+        weatherManager.getWeatherNow(TPCity.cityWithAutoRecognization()
+                , TPWeatherManager.TPWeatherReportLanguage.kSimplifiedChinese
+                , TPWeatherManager.TPTemperatureUnit.kCelsius
+                , new TPListeners.TPWeatherNowListener() {
+                    @Override
+                    public void onTPWeatherNowAvailable(TPWeatherNow weatherNow, String errorInfo) {
+                        if(weatherNow != null){
+                            //weatherNow 就是返回的当前天气信息。
+                            SharedPreferences.Editor editor = getSharedPreferences("weatherData",
+                                    MODE_PRIVATE).edit();
+
+                            editor.putInt("imageID", imageMatch(weatherNow.code));
+                            editor.putString("location", "大连");
+                            editor.putString("temp", weatherNow.temperature+"");
+                            editor.putString("code", weatherNow.code);
+                            editor.putString("desc", weatherNow.text);
+
+                            Calendar c = Calendar.getInstance();
+                            editor.putString("date", c.get(Calendar.MONTH)+"-"+c.get(Calendar.DAY_OF_MONTH));
+                            editor.apply();
+                        } else{
+                            Log.d("TAG", errorInfo); //错误信息
+                        }
+                    }
+                });
+    }
+
+    public int imageMatch(String code){
+        int weatherCode = Integer.parseInt(code);
+        switch (weatherCode) {
+            case 0:
+            case 2:
+                return R.drawable.sunny;
+            case 1:
+            case 3:
+                return R.drawable.clear_night;
+            case 4:
+            case 5:
+            case 7:
+            case 9:
+                return R.drawable.sun_cloudy;
+            case 6:
+            case 8:
+                return R.drawable.cloudy_night;
+            default:
+                return R.drawable.sunny;
+        }
+    }
+
 }

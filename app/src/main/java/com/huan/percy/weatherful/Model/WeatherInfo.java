@@ -17,6 +17,18 @@ public class WeatherInfo implements Serializable {
 
     private String date;
 
+    private String loaction;
+
+    public String getLoaction() {
+        return loaction;
+    }
+
+    public void setLoaction(String loaction) {
+        this.loaction = loaction;
+    }
+
+
+
     public WeatherInfo(String desc, String code, int temperature, int imageId) {
         this.desc = desc;
         this.code = code;
