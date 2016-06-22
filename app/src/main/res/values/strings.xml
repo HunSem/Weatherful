@@ -15,5 +15,9 @@
     <string name="version">版本</string>
     <string name="version_name">1.0</string>
     <string name="default_text">N/A</string>
+    <string name="now_desc">晴</string>
+    <string name="now_location">大连</string>
+    <string name="now_temp">24°</string>
+    <string name="now_tip">天气不错，出去浪吧</string>
 
 </resources>
